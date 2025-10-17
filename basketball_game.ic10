@@ -1,0 +1,71 @@
+# Basketball Game Manager
+# Tracks scores for 2 hoops, flashes winning light at 21 points
+# Includes reset button functionality
+# Note: Hoops auto-increment score by 2 points per basket
+
+alias Hoop1 d0        # First basketball hoop
+alias Hoop2 d1        # Second basketball hoop
+alias Light1 d2       # Flashing light for hoop 1
+alias Light2 d3       # Flashing light for hoop 2
+alias ResetButton d4  # Reset button
+
+alias Score1 r0             # Current score from hoop 1
+alias Score2 r1             # Current score from hoop 2
+alias ResetState r2         # Current reset button state
+alias ResetPrevious r3      # Previous reset button state
+alias GameWon r4            # Flag: 0=game ongoing, 1=game won
+
+define WINNING_SCORE 21
+
+# Initialize
+move GameWon 0
+s Hoop1 On 1
+s Hoop2 On 1
+s Hoop1 Setting 0
+s Hoop2 Setting 0
+
+start:
+yield
+
+# Check reset button
+move ResetPrevious ResetState
+l ResetState ResetButton Setting
+beq ResetState ResetPrevious check_hoops
+beq ResetState 0 check_hoops
+j reset_game
+
+check_hoops:
+# Skip score detection if game is already won
+bgt GameWon 0 start
+
+# Read current scores from hoops
+l Score1 Hoop1 Setting
+l Score2 Hoop2 Setting
+
+# Check if team 1 has won
+bge Score1 WINNING_SCORE team1_wins
+
+# Check if team 2 has won
+bge Score2 WINNING_SCORE team2_wins
+j start
+
+team1_wins:
+move GameWon 1
+s Light1 On 1  # Turn on winning light
+s Light2 On 0  # Make sure other light is off
+j start
+
+team2_wins:
+move GameWon 1
+s Light1 On 0  # Make sure other light is off
+s Light2 On 1  # Turn on winning light
+j start
+
+reset_game:
+# Reset all scores and states
+s Hoop1 Setting 0
+s Hoop2 Setting 0
+move GameWon 0
+s Light1 On 0
+s Light2 On 0
+j start
