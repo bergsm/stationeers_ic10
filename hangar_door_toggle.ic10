@@ -1,0 +1,56 @@
+# Hangar Door Toggle Script
+# Connects 2 buttons to 2 hangar doors
+# Pressing either button toggles both doors (open <-> close)
+
+alias Button1 d0 # First button
+alias Button2 d1 # Second button
+alias Door1 d2   # First hangar door
+alias Door2 d3   # Second hangar door
+
+alias Button1State r0      # Current state of button 1
+alias Button2State r1      # Current state of button 2
+alias Button1Previous r2   # Previous state of button 1
+alias Button2Previous r3   # Previous state of button 2
+alias CurrentDoorState r4  # Current door state (0=closed, 1=open)
+alias NewDoorState r5      # New door state to set
+
+# Initialize - read initial door state
+l CurrentDoorState Door1 Open
+
+start:
+yield
+
+# Save previous button states
+move Button1Previous Button1State
+move Button2Previous Button2State
+
+# Read current button states
+l Button1State Button1 Setting
+l Button2State Button2 Setting
+
+# Check if button 1 was just pressed (rising edge)
+beq Button1State Button1Previous check_button2
+beq Button1State 0 check_button2
+j toggle_doors
+
+check_button2:
+# Check if button 2 was just pressed (rising edge)
+beq Button2State Button2Previous start
+beq Button2State 0 start
+
+toggle_doors:
+# Toggle the door state
+beq CurrentDoorState 0 open_doors
+
+# Current state is open, so close the doors
+close_doors:
+s Door1 Open 0
+s Door2 Open 0
+move CurrentDoorState 0
+j start
+
+open_doors:
+s Door1 Open 1
+s Door2 Open 1
+move CurrentDoorState 1
+j start
