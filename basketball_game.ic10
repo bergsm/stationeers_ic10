@@ -15,14 +15,14 @@ alias ResetState r2         # Current reset button state
 alias ResetPrevious r3      # Previous reset button state
 alias GameWon r4            # Flag: 0=game ongoing, 1=game won
 
-define WINNING_SCORE 21
+define WINNING_SCORE 10
 
 # Initialize
 move GameWon 0
 s Hoop1 On 1
 s Hoop2 On 1
-s Hoop1 Setting 0
-s Hoop2 Setting 0
+s Hoop1 Setting 1
+s Hoop2 Setting 1
 
 start:
 yield
@@ -63,8 +63,18 @@ j start
 
 reset_game:
 # Reset all scores and states
-s Hoop1 Setting 0
-s Hoop2 Setting 0
+# Reset to 1 to work around hoop bug
+s Hoop1 On 0
+s Hoop2 On 0
+yield
+s Hoop1 Setting 1
+s Hoop2 Setting 1
+yield
+s Hoop1 On 1
+s Hoop2 On 1
+yield
+s Hoop1 Setting 1
+s Hoop2 Setting 1
 move GameWon 0
 s Light1 On 0
 s Light2 On 0
