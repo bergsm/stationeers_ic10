@@ -1,0 +1,68 @@
+# Weather LED Monitor
+# Changes LED color based on weather station status
+# Green = No storm, Yellow = Storm incoming, Flashing Yellow = Storm < 120s, Red = Active storm
+
+alias WeatherStation d0  # Weather station
+alias LED d1             # LED light indicator
+
+alias StormMode r0           # Weather station mode (0=no storm, 1=incoming, 2=active)
+alias TimeUntilStorm r1      # Seconds until storm arrives
+alias FlashCounter r2        # Counter for flashing effect
+
+define COLOR_GREEN 2
+define COLOR_YELLOW 5
+define COLOR_RED 4
+define WARNING_TIME 120      # Start flashing when storm is within 120 seconds
+define FLASH_SPEED 5         # Ticks per flash cycle (lower = faster)
+
+# Initialize
+move FlashCounter 0
+s LED On 1
+
+start:
+yield
+
+# Read weather station data
+l StormMode WeatherStation Mode
+l TimeUntilStorm WeatherStation NextWeatherEventTime
+
+# Check if storm is currently active (Mode = 2)
+beq StormMode 2 storm_active
+
+# Check if storm is incoming (Mode = 1)
+beq StormMode 1 storm_incoming
+
+# No storm (Mode = 0) - Green LED
+no_storm:
+s LED Color COLOR_GREEN
+s LED On 1
+j start
+
+storm_incoming:
+# Storm is incoming - check how far away
+blt TimeUntilStorm WARNING_TIME storm_close
+
+# Storm is far away - Solid Yellow
+storm_far:
+s LED Color COLOR_YELLOW
+s LED On 1
+j start
+
+# Storm is less than 120 seconds away - Flashing Yellow
+storm_close:
+s LED Color COLOR_YELLOW
+add FlashCounter FlashCounter 1
+mod FlashCounter FlashCounter FLASH_SPEED
+blt FlashCounter 2 flash_on
+s LED On 0
+j start
+
+flash_on:
+s LED On 1
+j start
+
+# Storm is currently active - Red LED
+storm_active:
+s LED Color COLOR_RED
+s LED On 1
+j start
