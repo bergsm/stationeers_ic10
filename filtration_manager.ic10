@@ -1,7 +1,7 @@
 # Filtration Manager
 # Controls filtration based on pressure and filter life
-# Turns off when pressure > 8 MPa or filter life <= 5%
-# Turns on when pressure < 7.5 MPa (and filters are healthy)
+# Turns off when pressure > 8 MPa or BOTH filters <= 5%
+# Turns on when pressure < 7.5 MPa (and at least one filter is healthy)
 # NOTE: IC10 chip must be installed in the filtration unit's IC10 slot
 
 alias PipeAnalyzer d0    # Pipe analyzer to monitor pressure
@@ -29,17 +29,20 @@ l O2Pressure PipeAnalyzer Pressure
 ls Filter1Life db 0 Quantity
 ls Filter2Life db 1 Quantity
 
-# Check if filters are too low
-ble Filter1Life FILTER_MIN filters_low
-ble Filter2Life FILTER_MIN filters_low
+# Check if at least one filter is still healthy
+bgt Filter1Life FILTER_MIN check_pressure
+bgt Filter2Life FILTER_MIN check_pressure
+# Both filters are at or below 5% - turn off
+j filters_low
 
-# Filters are healthy - check pressure
+check_pressure:
+# At least one filter is healthy - check pressure
 bgt O2Pressure PRESSURE_HIGH turn_off
 blt O2Pressure PRESSURE_LOW turn_on
 j start
 
 filters_low:
-# At least one filter is at or below 5% - turn off filtration
+# Both filters are at or below 5% - turn off filtration
 turn_off:
 s db On 0
 j start
