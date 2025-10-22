@@ -5,6 +5,7 @@
 # NOTE: IC10 chip must be installed in the filtration unit's IC10 slot
 
 alias PipeAnalyzer d0    # Pipe analyzer to monitor pressure
+alias LED d1             # Warning LED for low filters
 # db references the filtration unit this chip is installed in
 
 alias O2Pressure r0        # Current pressure reading (kPa)
@@ -15,9 +16,11 @@ alias ShouldRun r3       # Flag: 1=should run, 0=should stop
 define PRESSURE_HIGH 8000    # 8 MPa = 8000 kPa (turn off)
 define PRESSURE_LOW 7500     # 7.5 MPa = 7500 kPa (turn on)
 define FILTER_MIN 5          # Minimum filter life percent
+define COLOR_RED 4           # Red LED color for warning
 
 # Initialize
-s db On 1
+s db Mode 1
+s LED On 0
 
 start:
 yield
@@ -36,18 +39,22 @@ bgt Filter2Life FILTER_MIN check_pressure
 j filters_low
 
 check_pressure:
-# At least one filter is healthy - check pressure
+# At least one filter is healthy - turn off warning LED
+s LED On 0
+# Check pressure
 bgt O2Pressure PRESSURE_HIGH turn_off
 blt O2Pressure PRESSURE_LOW turn_on
 j start
 
 filters_low:
-# Both filters are at or below 5% - turn off filtration
+# Both filters are at or below 5% - turn off filtration and warn
+s LED Color COLOR_RED
+s LED On 1
 turn_off:
-s db On 0
+s db Mode 0
 j start
 
 turn_on:
 # Pressure is low enough - turn on filtration
-s db On 1
+s db Mode 1
 j start
